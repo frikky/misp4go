@@ -3,4 +3,3 @@ Repository that will contain golang API calls regarding MISP. Implemented as I n
 
 MISP: https://github.com/MISP
 Python reference: https://github.com/MISP/PyMISP
-# misp4go
