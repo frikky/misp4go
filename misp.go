@@ -47,6 +47,32 @@ type Attribute struct {
 	Sighting           []Sighting  `json:"Sighting,omitempty"`
 }
 
+type AttributeRet struct {
+	ID                 string      `json:"id"`
+	EventID            string      `json:"event_id"`
+	ObjectID           string      `json:"object_id"`
+	ObjectRelation     interface{} `json:"object_relation"`
+	Category           string      `json:"category"`
+	Type               string      `json:"type"`
+	ToIds              bool        `json:"to_ids"`
+	UUID               string      `json:"uuid"`
+	Timestamp          string      `json:"timestamp"`
+	Distribution       string      `json:"distribution"`
+	SharingGroupID     string      `json:"sharing_group_id"`
+	Comment            string      `json:"comment"`
+	Deleted            bool        `json:"deleted"`
+	DisableCorrelation bool        `json:"disable_correlation"`
+	Value              string      `json:"value"`
+	Event              struct {
+		OrgID        string `json:"org_id"`
+		Distribution string `json:"distribution"`
+		ID           string `json:"id"`
+		Info         string `json:"info"`
+		OrgcID       string `json:"orgc_id"`
+		UUID         string `json:"uuid"`
+	} `json:"Event"`
+}
+
 type Tag struct {
 	ID             string      `json:"id"`
 	Name           string      `json:"name"`
@@ -70,8 +96,17 @@ type Sighting struct {
 	AttributeUUID string `json:"attribute_uuid"`
 }
 
+type AttributeWrapper struct {
+	AttributeWrapper AttributeRetWrapper `json:"response"`
+	Raw              []byte              `json:"-"`
+}
+
+type AttributeRetWrapper struct {
+	Attributes []AttributeRet `json:"Attribute"`
+}
+
 type EventWrapper struct {
-	Events []EventRet `json:"-"`
+	Events []EventRet `json:"response"`
 	Raw    []byte     `json:"-"`
 }
 
@@ -207,15 +242,49 @@ func (misp *Mispdata) SearchEventTag(tag string) (*EventWrapper, error) {
 }
 
 // searching based on raw search
-func (misp *Mispdata) SearchAttributesRaw(search []byte) {
+func (misp *Mispdata) SearchEventsRaw(search []byte) (*EventWrapper, error) {
+	var url string
+	url = fmt.Sprintf("%s%s", misp.Url, "/events/restSearch")
+
+	misp.Ro.JSON = search
+
+	ret, err := grequests.Post(url, &misp.Ro)
+	if err != nil {
+		return &EventWrapper{}, err
+	}
+
+	parsedRet := new(EventWrapper)
+	err = json.Unmarshal(ret.Bytes(), &parsedRet)
+
+	if err != nil {
+		return &EventWrapper{}, err
+	}
+
+	parsedRet.Raw = ret.Bytes()
+	fmt.Println(string(parsedRet.Raw))
+	return parsedRet, nil
+}
+
+// searching based on raw search
+func (misp *Mispdata) SearchAttributesRaw(search []byte) (*AttributeWrapper, error) {
 	var url string
 	url = fmt.Sprintf("%s%s", misp.Url, "/attributes/restSearch")
 
 	misp.Ro.JSON = search
 
 	ret, err := grequests.Post(url, &misp.Ro)
-	fmt.Println(ret, err)
+	if err != nil {
+		return &AttributeWrapper{}, err
+	}
 
+	parsedRet := new(AttributeWrapper)
+	err = json.Unmarshal(ret.Bytes(), &parsedRet)
+	if err != nil {
+		return &AttributeWrapper{}, err
+	}
+
+	parsedRet.Raw = ret.Bytes()
+	return parsedRet, err
 }
 
 // Function for creating an event
