@@ -412,6 +412,24 @@ func (misp *Mispdata) GetObjectTemplatesList() (*OuterObjectTemplatesWrapper, er
 	return parsedRet, err
 }
 
+func (misp *Mispdata) UpdateAttribute(attributeId string, rawQuery []byte) (*attributeReturn, error) {
+	formattedUrl := fmt.Sprintf("%s/attributes/edit/%s", misp.Url, attributeId)
+	fmt.Println(formattedUrl)
+
+	misp.Ro.JSON = rawQuery
+
+	ret, err := grequests.Post(formattedUrl, &misp.Ro)
+	parsedRet := new(attributeReturn)
+	err = json.Unmarshal(ret.Bytes(), &parsedRet)
+	if err != nil {
+		return &attributeReturn{}, err
+	}
+
+	parsedRet.Raw = ret.Bytes()
+
+	return parsedRet, nil
+}
+
 // https://www.misp.software/2017/02/16/Sighting-The-Next-Level.html
 func (misp *Mispdata) AddSighting(attributeId string) error {
 	// Might need to find ID
