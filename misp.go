@@ -266,6 +266,20 @@ func (misp *Mispdata) SearchEventsRaw(search []byte) (*EventWrapper, error) {
 }
 
 // searching based on raw search
+func (misp *Mispdata) SearchWarninglists(attribute Attribute) (*grequests.Response, error) {
+	var url string
+
+	data := fmt.Sprintf(`{"[%s]": "%s"}`, attribute.Type, attribute.Value)
+	url = fmt.Sprintf("%s%s", misp.Url, "/warninglists/checkValue")
+
+	//misp.Ro.JSON = []byte(data)
+	misp.Ro.JSON = []byte(data)
+
+	ret, err := grequests.Post(url, &misp.Ro)
+	return ret, err
+}
+
+// searching based on raw search
 func (misp *Mispdata) SearchAttributesRaw(search []byte) (*AttributeWrapper, error) {
 	var url string
 	url = fmt.Sprintf("%s%s", misp.Url, "/attributes/restSearch")
